@@ -1,0 +1,31 @@
+#cloud-config
+apt_sources:
+  - source: 'ppa:maas/stable'
+  - source: 'ppa:juju/stable'
+apt_update: true
+apt_upgrade: true
+# unattended-upgrades
+debconf_selections: |
+  unattended-upgrades unattended-upgrades/enable_auto_updates boolean true
+  maas-cluster-controller maas-cluster-controller/maas-url string http://10.12.0.2/MAAS
+  maas-region-controller-min maas/default-maas-url string 10.12.0.2
+write_files:
+  - content: |
+      auto eth1
+      iface eth1 inet static
+      address 10.12.0.2
+      network 10.12.0.0
+      netmask 255.255.255.0
+      gateway 10.12.0.1
+    path: /etc/network/interfaces.d/eth1.cfg
+runcmd:
+  - ifup eth1
+  - dpkg-reconfigure -fnoninteractive unattended-upgrades
+  - sed -i -e 's/^#\(PasswordAuthentication\) .*/\1 no/' /etc/ssh/sshd_config
+  - service ssh restart
+
+packages:
+  - maas
+  - jq
+  - python-novaclient
+  - python-neutronclient  

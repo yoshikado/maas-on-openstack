@@ -1,0 +1,52 @@
+=== modified file 'provisioningserver/drivers/power/__init__.py'
+--- provisioningserver/drivers/power/__init__.py        2016-02-19 08:04:29.717484824 +0000
++++ provisioningserver/drivers/power/__init__.py        2016-02-17 06:36:10.681484824 +0000
+@@ -333,6 +333,7 @@
+ from provisioningserver.drivers.power.ucsm import UCSMPowerDriver
+ from provisioningserver.drivers.power.virsh import VirshPowerDriver
+ from provisioningserver.drivers.power.vmware import VMwarePowerDriver
++from provisioningserver.drivers.power.nova import NovaPowerDriver
+
+ registered_power_drivers = [
+     APCPowerDriver(),
+@@ -346,6 +347,7 @@
+     UCSMPowerDriver(),
+     VirshPowerDriver(),
+     VMwarePowerDriver(),
++    NovaPowerDriver(),
+ ]
+ for driver in registered_power_drivers:
+     PowerDriverRegistry.register_item(driver.name, driver)
+
+
+=== modified file 'provisioningserver/power/__init__.py'
+--- provisioningserver/power/__init__.py        2016-02-19 08:03:30.969484824 +0000
++++ provisioningserver/power/__init__.py        2016-02-16 07:18:04.313484824 +0000
+@@ -38,6 +38,7 @@
+     'ucsm',
+     'virsh',
+     'vmware',
++    'nova',
+ ]
+
+
+=== modified file 'provisioningserver/power/schema.py'
+--- provisioningserver/power/schema.py  2016-02-19 08:03:46.437484824 +0000
++++ provisioningserver/power/schema.py  2016-02-17 06:37:52.733484824 +0000
+@@ -333,4 +333,15 @@
+                 'lpar', "HMC logical partition"),
+         ],
+     },
++    {
++        'name': 'nova',
++        'description': 'OpenStack nova',
++        'fields': [
++            make_json_field('nova_id', "Host UUID"),
++            make_json_field('os_tenantname', "Tenant name"),
++            make_json_field('os_username', "OpenStack username"),
++            make_json_field('os_password', "OpenStack password", field_type='password'),
++            make_json_field('os_authurl', "OpenStack Auth URL"),
++        ],
++    },
+ ]
+

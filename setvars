@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# openstack conf
+openstack_cred="${HOME}/novarc"
+source $openstack_cred
+admin_nw_name=${OS_USERNAME}_admin_net
+admin_net_id=`neutron net-list | grep $admin_nw_name| cut -d\| -f2| tr -d ' '`
+ext_net_id=`neutron net-list | grep ext_net | cut -d\| -f2| tr -d ' '`
+
+# maas instance conf
+boot_img="ubuntu-trusty-14.04-amd64-server-20160217.1-disk1.img"
+#boot_img="ubuntu-wily-15.10-amd64-server-20151203-disk1.img"
+flavor="m1.small"
+maas_nw_name="maas-network"
+maas_subnw_name="maas-subnet"
+maas_rt_name="maas-router"
+maas_instance="maas-server"
+maas_nw_allocation_start="10.12.0.2"
+maas_nw_allocation_end="10.12.0.254"
+maas_nw_cidr="10.12.0.0/24"
+
+# pxe boot image conf
+pxeboot_img_name="pxeboot.img"
+glance_img_name="maas-pxe"
+
+# maas conf
+ip_range_high="10.12.0.200"
+ip_range_low="10.12.0.100"
+broadcast_ip="10.12.0.255"
+router_ip="10.12.0.1"
+static_ip_range_low="10.12.0.201"
+static_ip_range_high="10.12.0.250"
+maas_server_ip="10.12.0.2"
+maas_user_name="admin"
+maas_passwd="ubuntu"
+dns_forwarder_ip=`less /etc/resolv.conf | grep nameserver | cut -d' ' -f2`
