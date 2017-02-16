@@ -1,4 +1,5 @@
 import click
+import time
 from config import Config
 from openstack_utils import OpenstackUtils
 from cloudconfig import CloudConfig
@@ -53,6 +54,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
     configuremaas = ConfigureMAAS(cfg)
     configuremaas.run(release, ip)
+    time.sleep(30)
+    click.echo('Finished deploying')
 
 
 @cli.command()
