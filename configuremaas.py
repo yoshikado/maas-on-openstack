@@ -64,5 +64,5 @@ class ConfigureMAAS:
     def RunCommand(self, host, cmd):
         with settings(hide('everything'), host_string=host):
             results = fabric_run(cmd)
-        click.echo(results)
+        # click.echo(results) # FIXME
         return results

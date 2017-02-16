@@ -148,3 +148,4 @@ class OpenstackUtils:
         while not re.search(pattern, console_log):
             time.sleep(10)
             console_log = self.nova.servers.get_console_output(instance, 10)
+        return True
