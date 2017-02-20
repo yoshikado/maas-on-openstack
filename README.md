@@ -23,4 +23,8 @@ $ moo deploy -r xenial
 ```
 
 ### Enlist nodes
-T.B.D
+After MAAS is deployed, you can add nodes to your MAAS cluster:
+
+```
+$ moo add_node --flavor m1.medium node1
+```

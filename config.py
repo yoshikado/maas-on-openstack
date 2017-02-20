@@ -25,8 +25,20 @@ class Config(object):
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
         self.image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170202-disk1.img'
-        self.keyname = environ['OS_TENANT_NAME']
         self.ext_net = 'ext_net'
+        self._get_openstack_config()
+
+    def _get_openstack_config(self):
+        try:
+            self.credentials = {}
+            self.credentials['username'] = environ['OS_USERNAME']
+            self.credentials['password'] = environ['OS_PASSWORD']
+            self.credentials['auth_url'] = environ['OS_AUTH_URL']
+            self.credentials['project_id'] = environ['OS_PROJECT_ID']
+            self.credentials['tenant'] = environ['OS_TENANT_NAME']
+            self.keyname = environ['OS_TENANT_NAME']
+        except KeyError:
+            click.echo('No environmental varialbles available.')
 
     def Update(self):
         ips = IPNetwork(self.maas_network)

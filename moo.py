@@ -4,6 +4,7 @@ from config import Config
 from openstack_utils import OpenstackUtils
 from cloudconfig import CloudConfig
 from configuremaas import ConfigureMAAS
+from maas_utils import MaasUtils
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
@@ -69,8 +70,9 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
 @pass_config
 def add_network(cfg, cidr, name):
     """Add network to OpenStack environment."""
-    if cfg.verbose:
-        click.echo('We are in verbose mode')
+    # FIXME
+    click.echo('Under construction')
+    return
     openstack = OpenstackUtils()
     if not openstack.CreateNetwork(cidr, name):
         click.echo("ERROR: Network not created.")
@@ -94,6 +96,10 @@ def add_node(cfg, name, image, flavor, tag):
     """Create an instance and add it to maas."""
     # FIXME
     openstack = OpenstackUtils(cfg)
-    if not openstack.BootInstance(name, cfg.maas_network_name, image):
+    if not openstack.BootInstance(name, cfg.maas_network_name, image, flavor=flavor):
         return
-    click.echo('Under construction')
+    instance_id = openstack.GetInstanceID(name)
+    mac = openstack.GetMAC(openstack.GetInstanceID(name))
+    ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
+    maas = MaasUtils(cfg, ip)
+    maas.UpdateHost(name, instance_id, mac)

@@ -14,14 +14,7 @@ class OpenstackUtils:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        try:
-            self.credentials = {}
-            self.credentials['username'] = environ['OS_USERNAME']
-            self.credentials['password'] = environ['OS_PASSWORD']
-            self.credentials['auth_url'] = environ['OS_AUTH_URL']
-            self.credentials['project_id'] = environ['OS_PROJECT_ID']
-        except KeyError:
-            click.echo('No environmental varialbles available.')
+        self.credentials = self.cfg.credentials
         self.neutron = neutronclient.Client(**self.credentials)
         self.nova = novaclient.Client(2, self.credentials["username"],
                                       self.credentials["password"],
@@ -109,11 +102,6 @@ class OpenstackUtils:
             click.echo(e)
             return e
         return detail['id']
-        # netw = self.neutron.list_networks()
-        # for i in range(len(netw['networks'])):
-        #    if network_name == netw['networks'][i]['name']:
-        #        return netw['networks'][i]['id']
-        # return False
 
     def GetInstanceID(self, instance_name):
         try:
@@ -148,10 +136,17 @@ class OpenstackUtils:
             return False
         return image.id
 
-    def BootInstance(self, name, network_name, image, cloud_cfg_file=None):
+    def GetMAC(self, instance_id):
+        ports = self.neutron.list_ports()
+        for port in ports['ports']:
+            if port['device_id'] == instance_id:
+                return port['mac_address']
+        return False
+
+    def BootInstance(self, name, network_name, image, flavor='m1.small', cloud_cfg_file=None):
         defaultnet_id = self.GetNetID(self.cfg.project_net)
         maasnet_id = self.GetNetID(network_name)
-        flavor = self.GetFlavor('m1.small')
+        flavor = self.GetFlavor(flavor)
         image_id = self.GetImageID(image)
         if not defaultnet_id or not maasnet_id or not flavor or not image_id:
             return False

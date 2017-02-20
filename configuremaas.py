@@ -11,7 +11,6 @@ class ConfigureMAAS:
 
     def run(self, release, host):
         """ Run a command on the host. Assumes user has SSH keys setup """
-        env.user = 'ubuntu'
         # env.use_ssh_config = True
         if release == 'trusty':
             self.ConfigureTrusty(host)
@@ -60,8 +59,8 @@ class ConfigureMAAS:
         self.RunCommand(host, cmd)
         self.RunCommand(host, 'sudo shutdown -r 30')
 
-
     def RunCommand(self, host, cmd):
+        env.user = 'ubuntu'
         with settings(hide('everything'), host_string=host):
             results = fabric_run(cmd)
         # click.echo(results) # FIXME
