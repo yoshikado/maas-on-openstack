@@ -5,6 +5,8 @@ import time
 import re
 import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
+import neutronclient.neutron.v2_0 as neutronv2
+import neutronclient.common.exceptions as neutronexceptions
 
 
 class OpenstackUtils:
@@ -101,16 +103,23 @@ class OpenstackUtils:
         return True
 
     def GetNetID(self, network_name):
-        netw = self.neutron.list_networks()
-        for i in range(len(netw['networks'])):
-            if network_name == netw['networks'][i]['name']:
-                return netw['networks'][i]['id']
-        return False
-
-    def GetInstanceID(self, instance):
         try:
-            instance_id = self.nova.servers.find(name=instance).id
+            detail = neutronv2.find_resource_by_name_or_id(self.neutron, 'network', network_name)
+        except neutronexceptions.NotFound as e:
+            click.echo(e)
+            return e
+        return detail['id']
+        # netw = self.neutron.list_networks()
+        # for i in range(len(netw['networks'])):
+        #    if network_name == netw['networks'][i]['name']:
+        #        return netw['networks'][i]['id']
+        # return False
+
+    def GetInstanceID(self, instance_name):
+        try:
+            instance_id = self.nova.servers.find(name=instance_name).id
         except novaclient.exceptions.NotFound as e:
+            click.echo(e)
             return False
         return instance_id
 
@@ -118,34 +127,60 @@ class OpenstackUtils:
         try:
             ips = self.nova.servers.ips(self.nova.servers.find(name=name))
         except novaclient.exceptions.NotFound as e:
-            # click.echo(e)
+            click.echo(e)
             return False
         ip = ips[network_name][0]['addr']
         return ip
 
-    def BootInstance(self, name, network_name, cloud_cfg_file):
+    def GetFlavor(self, flavor_name):
+        try:
+            flavor = self.nova.flavors.find(name=flavor_name)
+        except novaclient.exceptions.NotFound as e:
+            click.echo(e)
+            return False
+        return flavor
+
+    def GetImageID(self, image_name):
+        try:
+            image = self.nova.images.find(name=image_name)
+        except self.novaclient.exceptions.NotFound as e:
+            click.echo(e)
+            return False
+        return image.id
+
+    def BootInstance(self, name, network_name, image, cloud_cfg_file=None):
         defaultnet_id = self.GetNetID(self.cfg.project_net)
         maasnet_id = self.GetNetID(network_name)
-        image = self.cfg.image
-        flavor = self.nova.flavors.find(name='m1.small')
+        flavor = self.GetFlavor('m1.small')
+        image_id = self.GetImageID(image)
+        if not defaultnet_id or not maasnet_id or not flavor or not image_id:
+            return False
         key = self.cfg.keyname
         nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
         if self.GetInstanceID(name):
             click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
             return False
-        with open(cloud_cfg_file) as userdata_file:
-            instance = self.nova.servers.create(name, image, flavor,
-                                                userdata=userdata_file,
+        try:
+            with open(cloud_cfg_file) as userdata_file:
+                instance = self.nova.servers.create(name, image_id, flavor,
+                                                    userdata=userdata_file,
+                                                    key_name=key,
+                                                    nics=nics)
+        except TypeError:
+            instance = self.nova.servers.create(name, image_id, flavor,
                                                 key_name=key,
                                                 nics=nics)
         while instance.status == 'BUILD':
             click.echo("Waiting for instance to be active.")
             time.sleep(10)
             instance = self.nova.servers.get(instance.id)
+        return True
+
+    def WaitCloudInit(self, instance_name):
+        instance = self.GetInstanceID(instance_name)
         console_log = self.nova.servers.get_console_output(instance, 10)
         pattern = "Cloud-init v.* finished at"
         click.echo("Waiting for cloud-init to finish. This will take a while...")
         while not re.search(pattern, console_log):
             time.sleep(10)
             console_log = self.nova.servers.get_console_output(instance, 10)
-        return True

@@ -24,7 +24,7 @@ class Config(object):
         self.project_net = '%s_admin_net' % environ['OS_TENANT_NAME']
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
-        self.image = '5f63568f-cb2e-4e80-a22c-63cc86074328'
+        self.image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170202-disk1.img'
         self.keyname = environ['OS_TENANT_NAME']
         self.ext_net = 'ext_net'
 

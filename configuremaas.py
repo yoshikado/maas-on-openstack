@@ -26,7 +26,7 @@ class ConfigureMAAS:
         click.echo(host)
 
     def ConfigureXenial(self, host):
-        cmd = 'sudo maas-region createadmin --username %s --password %s --email root@example.com' % (self.cfg.profile, self.cfg.passw)
+        cmd = "sudo maas-region createadmin --username %s --password %s --email root@example.com" % (self.cfg.profile, self.cfg.passw)
         self.RunCommand(host, cmd)
         cmd = 'maas login %s http://localhost/MAAS/api/2.0 "`sudo maas-region apikey --username %s`"' % (self.cfg.profile, self.cfg.profile)
         self.RunCommand(host, cmd)

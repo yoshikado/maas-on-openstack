@@ -48,8 +48,13 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     cloudconfig = CloudConfig(cfg)
     cloudconfig.CreateCloudConfig(release)
     # Deploy instance
-    if not openstack.BootInstance(cfg.maas_name, cfg.maas_network_name, cloudconfig.file):
+    image = cfg.image
+    if not openstack.BootInstance(cfg.maas_name,
+                                  cfg.maas_network_name,
+                                  image,
+                                  cloud_cfg_file=cloudconfig.file):
         return
+    openstack.WaitCloudInit(cfg.maas_name)
     # Configure MAAS
     ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
     configuremaas = ConfigureMAAS(cfg)
@@ -81,10 +86,14 @@ def create_pxeimage(cfg):
 
 @cli.command()
 @click.argument('name')
+@click.option('--image', default='maas-pxe-image', help='image name')
 @click.option('--flavor', default='m1.small', help='instance flavor. default=m1.small')
 @click.option('--tag', default='maasstack', help='tag name for the node. default=maasstack')
 @pass_config
-def add_node(cfg, name, flavor, tag):
+def add_node(cfg, name, image, flavor, tag):
     """Create an instance and add it to maas."""
     # FIXME
+    openstack = OpenstackUtils(cfg)
+    if not openstack.BootInstance(name, cfg.maas_network_name, image):
+        return
     click.echo('Under construction')
