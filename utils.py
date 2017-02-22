@@ -12,8 +12,7 @@ def isExist(path):
 
 def GetMOOEnvVar(moo_envpath):
     if not Path(moo_envpath).is_file():
-        click.echo('ERROR: You need to first create a init file.You can create it by typing:')
-        click.echo("moo init")
+        click.echo('Configuration file: %s not found.' % config)
         return False
     f = open(moo_envpath, 'r')
     moo_vars = yaml.load(f)

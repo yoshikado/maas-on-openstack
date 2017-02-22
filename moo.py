@@ -37,8 +37,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
         cfg.maas_network = network if network else cfg.maas_network
         cfg.maas_network_name = network_name if network_name else cfg.maas_network_name
         cfg.Update()
-    # if not cfg.Init(config):
-    #    return
+    # if config:
+    #    cfg.Init(config):
     # Create MAAS network
     openstack = OpenstackUtils(cfg)
     if not skip_network:
@@ -49,7 +49,7 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     cloudconfig = CloudConfig(cfg)
     cloudconfig.CreateCloudConfig(release)
     # Deploy instance
-    image = cfg.image
+    image = cfg.GetImage(release)
     if not openstack.BootInstance(cfg.maas_name,
                                   cfg.maas_network_name,
                                   image,

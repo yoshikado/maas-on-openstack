@@ -1,0 +1,14 @@
+moo_env:
+  maas:
+    name: 'maasstack'
+    profile: 'admin'
+    passphrase: 'ubuntu'
+    network_name: 'maas_net'
+    network: '10.12.1.0/24'
+    dns_forwarder_ip: '10.5.0.3'
+  openstack:
+    pxe_image: 'maas-pxe-image'
+    xenial_image: 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170202-disk1.img'
+    trusty_image: 'trusty'
+    ext_net_name: 'ext_net'
+    project_net: 'demo_net'
