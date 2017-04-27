@@ -1,11 +1,9 @@
 import click
-import time
 from config import Config
 from openstack_utils import OpenstackUtils
 from cloudconfig import CloudConfig
 from configuremaas import ConfigureMAAS
 from maas_utils import MaasUtils
-import utils
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
@@ -37,21 +35,22 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
         cfg.maas_name = name if name else cfg.maas_name
         cfg.maas_network = network if network else cfg.maas_network
         cfg.maas_network_name = network_name if network_name else cfg.maas_network_name
-        cfg.Update()
-    if config:
-        cfg.Init(config)
+    if not cfg.Init(config):
+        return False
     # Create MAAS network
     openstack = OpenstackUtils(cfg)
     if not skip_network:
         if not openstack.CreateNetwork(cfg.maas_network, cfg.maas_network_name):
             click.echo("ERROR: Network not created.")
+            click.echo("If you don't need to create network, use '--skip-network' option.")
             return
     # Create cloud-config file
     cloudconfig = CloudConfig(cfg)
     cloudconfig.CreateCloudConfig(release)
     # Deploy instance
     image = cfg.GetImage(release)
-    openstack.CreateKeyPair(cfg.keyname)
+    if not openstack.CreateKeyPair(cfg.keyname):
+        return
     if not openstack.BootInstance(cfg.maas_name,
                                   cfg.maas_network_name,
                                   image,
@@ -74,8 +73,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
 def add_network(cfg, cidr, name):
     """Add network to OpenStack environment."""
     # FIXME
-    click.echo('Under construction')
-    # return
+    if not cfg.Init():
+        return False
     openstack = OpenstackUtils(cfg)
     if not openstack.CreateNetwork(cidr, name):
         click.echo("ERROR: Network not created.")
@@ -98,6 +97,8 @@ def create_pxeimage(cfg):
 def add_node(cfg, name, image, flavor, tag):
     """Create an instance and add it to maas."""
     # FIXME
+    if not cfg.Init():
+        return False
     openstack = OpenstackUtils(cfg)
     if not openstack.BootInstance(name, cfg.maas_network_name, image, flavor=flavor):
         return

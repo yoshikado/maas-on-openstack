@@ -3,6 +3,7 @@ import click
 import time
 import re
 import utils
+from pathlib import Path
 import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
 import neutronclient.neutron.v2_0 as neutronv2
@@ -130,7 +131,7 @@ class OpenstackUtils:
 
     def GetImageID(self, image_name):
         try:
-            image = self.nova.images.find(name=image_name)
+            image = self.nova.glance.find_image(name_or_id=image_name)
         except novaclient.exceptions.NotFound as e:
             click.echo(e)
             return False
@@ -146,12 +147,20 @@ class OpenstackUtils:
     def KeyExist(self, keyname):
         try:
             self.nova.keypairs.find(name=keyname)
-        except novaclient.exceptions.NotFound as e:
+        except novaclient.exceptions.NotFound:
             return False
         return True
 
     def CreateKeyPair(self, keyname):
+        click.echo('Creating keypair')
         if self.KeyExist(keyname):
+            keypath = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
+            keypath = Path(keypath).joinpath(self.cfg.keyname)
+            if not keypath.is_file():
+                click.echo('ERROR: keypair in OpenStack exists, but key file not found.')
+                click.echo('%s' % keypath)
+                return False
+            click.echo('Keypair exists, skip creating')
             return True
         else:
             pubkey = utils.CreateSSHKey(keyname, self.cfg.keypath)

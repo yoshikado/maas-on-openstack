@@ -1,5 +1,4 @@
 from pathlib import Path
-from os import chmod
 from Crypto.PublicKey import RSA
 import yaml
 import click
@@ -40,14 +39,10 @@ def CreateSSHKey(keyname, dir):
 
 
 def TouchFile(dir, filename):
-    try:
-        Path(dir).mkdir(parents=True, exist_ok=True)
-    except FileExistsError as e:
-        # click.echo(e)
-        return False
+    Path(dir).mkdir(parents=True, exist_ok=True)
     config = Path.joinpath(dir, filename)
     try:
         Path(config).touch(exist_ok=False)
-    except FileExistsError as e:
-        click.echo(e)
+    except FileExistsError:
+        return config
     return config

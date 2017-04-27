@@ -23,8 +23,6 @@ class Config(object):
         self.trusty_ver = '1.9.4+bzr4592-0ubuntu1~14.04.1lp1657941rev4'
         self.keypath = Path.joinpath(self.configpath, 'ssh')
         self.keyname = 'maas_key'
-        self.Update()
-        self._get_openstack_config()
 
     def _get_openstack_config(self):
         try:
@@ -35,8 +33,10 @@ class Config(object):
             self.credentials['project_id'] = environ['OS_PROJECT_ID']
             self.credentials['tenant'] = environ['OS_TENANT_NAME']
             self.project_net = '%s_admin_net' % environ['OS_TENANT_NAME']
-        except KeyError:
-            click.echo('No environmental varialbles available.')
+        except KeyError as e:
+            click.echo('Provide OpenStack variables. %s' % e)
+            return False
+        return True
 
     def Update(self):
         ips = IPNetwork(self.maas_network)
@@ -47,6 +47,9 @@ class Config(object):
         self.maas_url_rack = "http://%s:5240/MAAS" % self.maas_ip
         self.sed_maas_url_region = "http:\/\/%s\/MAAS" % self.maas_ip
         self.sed_maas_url_rack = "http:\/\/%s:5240\/MAAS" % self.maas_ip
+        if not self._get_openstack_config():
+            return False
+        return True
 
     def ValidateConfig(self):
         # FIXME
@@ -60,11 +63,13 @@ class Config(object):
         else:
             click.echo('The distribution is not supported')
 
-    def Init(self, config):
+    def Init(self, config=None):
         # FIXME
         if config:
             moo_vars = utils.GetMOOEnvVar(config)
         else:
             config = utils.TouchFile(self.configpath, self.configfile)
+        if not self.Update():
+            return False
         return True
         # f = open(self.configpath, 'w')

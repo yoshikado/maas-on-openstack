@@ -1,7 +1,6 @@
 import click
 from pathlib import Path
 from netaddr import IPNetwork
-from fabric.api import env
 from fabric.operations import run as fabric_run
 from fabric.context_managers import settings, hide
 
