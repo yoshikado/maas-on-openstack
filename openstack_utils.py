@@ -1,8 +1,8 @@
-from os import environ
 import urllib
 import click
 import time
 import re
+import utils
 import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
 import neutronclient.neutron.v2_0 as neutronv2
@@ -131,7 +131,7 @@ class OpenstackUtils:
     def GetImageID(self, image_name):
         try:
             image = self.nova.images.find(name=image_name)
-        except self.novaclient.exceptions.NotFound as e:
+        except novaclient.exceptions.NotFound as e:
             click.echo(e)
             return False
         return image.id
@@ -143,15 +143,37 @@ class OpenstackUtils:
                 return port['mac_address']
         return False
 
-    def BootInstance(self, name, network_name, image, flavor='m1.small', cloud_cfg_file=None):
+    def KeyExist(self, keyname):
+        try:
+            self.nova.keypairs.find(name=keyname)
+        except novaclient.exceptions.NotFound as e:
+            return False
+        return True
+
+    def CreateKeyPair(self, keyname):
+        if self.KeyExist(keyname):
+            return True
+        else:
+            pubkey = utils.CreateSSHKey(keyname, self.cfg.keypath)
+            self.nova.keypairs.create(keyname, pubkey)
+        return True
+
+    def BootInstance(self, name, network_name, image, flavor='m1.small', cloud_cfg_file=None, default_nw=False):
         defaultnet_id = self.GetNetID(self.cfg.project_net)
         maasnet_id = self.GetNetID(network_name)
         flavor = self.GetFlavor(flavor)
         image_id = self.GetImageID(image)
-        if not defaultnet_id or not maasnet_id or not flavor or not image_id:
-            return False
+        if default_nw:
+            if not defaultnet_id or not maasnet_id or not flavor or not image_id:
+                return False
+            else:
+                nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
+        else:
+            if not maasnet_id or not flavor or not image_id:
+                return False
+            else:
+                nics = [{'net-id': maasnet_id}]
         key = self.cfg.keyname
-        nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
         if self.GetInstanceID(name):
             click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
             return False

@@ -5,6 +5,7 @@ from openstack_utils import OpenstackUtils
 from cloudconfig import CloudConfig
 from configuremaas import ConfigureMAAS
 from maas_utils import MaasUtils
+import utils
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
@@ -37,8 +38,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
         cfg.maas_network = network if network else cfg.maas_network
         cfg.maas_network_name = network_name if network_name else cfg.maas_network_name
         cfg.Update()
-    # if config:
-    #    cfg.Init(config):
+    if config:
+        cfg.Init(config)
     # Create MAAS network
     openstack = OpenstackUtils(cfg)
     if not skip_network:
@@ -50,18 +51,20 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     cloudconfig.CreateCloudConfig(release)
     # Deploy instance
     image = cfg.GetImage(release)
+    openstack.CreateKeyPair(cfg.keyname)
     if not openstack.BootInstance(cfg.maas_name,
                                   cfg.maas_network_name,
                                   image,
-                                  cloud_cfg_file=cloudconfig.file):
+                                  flavor='m1.medium',
+                                  cloud_cfg_file=cloudconfig.file,
+                                  default_nw=True):
         return
     openstack.WaitCloudInit(cfg.maas_name)
     # Configure MAAS
     ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
     configuremaas = ConfigureMAAS(cfg)
     configuremaas.run(release, ip)
-    time.sleep(30)
-    click.echo('Finished deploying')
+    click.echo('Finished deploying to %s' % ip)
 
 
 @cli.command()
@@ -72,8 +75,8 @@ def add_network(cfg, cidr, name):
     """Add network to OpenStack environment."""
     # FIXME
     click.echo('Under construction')
-    return
-    openstack = OpenstackUtils()
+    # return
+    openstack = OpenstackUtils(cfg)
     if not openstack.CreateNetwork(cidr, name):
         click.echo("ERROR: Network not created.")
 
@@ -102,4 +105,4 @@ def add_node(cfg, name, image, flavor, tag):
     mac = openstack.GetMAC(openstack.GetInstanceID(name))
     ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
     maas = MaasUtils(cfg, ip)
-    maas.UpdateHost(name, instance_id, mac)
+    maas.UpdateHost(name, instance_id, mac, tag)

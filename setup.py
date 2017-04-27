@@ -10,6 +10,7 @@ setup(
         'fabric3',
         'python-novaclient',
         'python-neutronclient',
+        'pycryptodome',
     ],
     entry_points='''
         [console_scripts]

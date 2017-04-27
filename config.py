@@ -17,9 +17,12 @@ class Config(object):
         self.dns_forwarder_ip = '10.5.0.3'
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
-        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170202-disk1.img'
-        self.trusty_image = 'trusty'
+        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170330-disk1.img'
+        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20170330-disk1.img'
         self.ext_net = 'ext_net'
+        self.trusty_ver = '1.9.4+bzr4592-0ubuntu1~14.04.1lp1657941rev4'
+        self.keypath = Path.joinpath(self.configpath, 'ssh')
+        self.keyname = 'maas_key'
         self.Update()
         self._get_openstack_config()
 
@@ -31,7 +34,6 @@ class Config(object):
             self.credentials['auth_url'] = environ['OS_AUTH_URL']
             self.credentials['project_id'] = environ['OS_PROJECT_ID']
             self.credentials['tenant'] = environ['OS_TENANT_NAME']
-            self.keyname = environ['OS_TENANT_NAME']
             self.project_net = '%s_admin_net' % environ['OS_TENANT_NAME']
         except KeyError:
             click.echo('No environmental varialbles available.')
@@ -39,8 +41,9 @@ class Config(object):
     def Update(self):
         ips = IPNetwork(self.maas_network)
         self.maas_ip = ips[2]
-        self.dynamic_start_ip = ips[3]
+        self.dynamic_start_ip = ips[10]
         self.dynamic_end_ip = ips[int(ips.size/2)]
+        self.maas_url = "http://%s/MAAS" % self.maas_ip
         self.maas_url_rack = "http://%s:5240/MAAS" % self.maas_ip
         self.sed_maas_url_region = "http:\/\/%s\/MAAS" % self.maas_ip
         self.sed_maas_url_rack = "http:\/\/%s:5240\/MAAS" % self.maas_ip
@@ -51,9 +54,7 @@ class Config(object):
 
     def GetImage(self, release):
         if release == 'trusty':
-            click.echo('Trusty not supported')
-            return False
-            # return self.trusty_image
+            return self.trusty_image
         elif release == 'xenial':
             return self.xenial_image
         else:
