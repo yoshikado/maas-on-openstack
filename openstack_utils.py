@@ -17,10 +17,10 @@ class OpenstackUtils:
         self.cfg = cfg
         self.credentials = self.cfg.credentials
         self.neutron = neutronclient.Client(**self.credentials)
-        self.nova = novaclient.Client(2, self.credentials["username"],
-                                      self.credentials["password"],
-                                      self.credentials["project_id"],
-                                      self.credentials["auth_url"])
+        self.nova = novaclient.Client(2, username = self.credentials["username"],
+                                      password = self.credentials["password"],
+                                      project_name = self.credentials["project_name"],
+                                      auth_url = self.credentials["auth_url"])
         self.CheckAuth()
 
     def CheckAuth(self):

@@ -14,13 +14,13 @@ class Config(object):
         self.maas_name = 'maasstack'
         self.maas_network = '10.12.1.0/24'
         self.maas_network_name = 'maas_net'
-        self.dns_forwarder_ip = '10.5.0.3'
+        self.dns_forwarder_ip = utils.get_resolv()
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
-        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170330-disk1.img'
-        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20170330-disk1.img'
+        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20170516-disk1.img'
+        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20170517-disk1.img'
         self.ext_net = 'ext_net'
-        self.trusty_ver = '1.9.4+bzr4592-0ubuntu1~14.04.1lp1657941rev4'
+        self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.1lp1657941rev1'
         self.keypath = Path.joinpath(self.configpath, 'ssh')
         self.keyname = 'maas_key'
 
@@ -30,9 +30,8 @@ class Config(object):
             self.credentials['username'] = environ['OS_USERNAME']
             self.credentials['password'] = environ['OS_PASSWORD']
             self.credentials['auth_url'] = environ['OS_AUTH_URL']
-            self.credentials['project_id'] = environ['OS_PROJECT_ID']
-            self.credentials['tenant'] = environ['OS_TENANT_NAME']
-            self.project_net = '%s_admin_net' % environ['OS_TENANT_NAME']
+            self.credentials['project_name'] = environ['OS_PROJECT_NAME']
+            self.project_net = '%s_admin_net' % environ['OS_PROJECT_NAME']
         except KeyError as e:
             click.echo('Provide OpenStack variables. %s' % e)
             return False
@@ -71,5 +70,6 @@ class Config(object):
             config = utils.TouchFile(self.configpath, self.configfile)
         if not self.Update():
             return False
+        # click.echo("resolv:%s" % self.dns_forwarder_ip)
         return True
         # f = open(self.configpath, 'w')

@@ -71,6 +71,10 @@ class ConfigureMAAS:
         cmd = "maas %s subnets read| jq -r '.[] | \
               select(.cidr==\"%s\").vlan.fabric'" % (self.cfg.profile, self.cfg.maas_network)
         fabric = self.RunCommand(host, cmd)
+        cmd = "maas %s subnets read | jq -M '.[]| select(.name==\"%s\").id'" % (self.cfg.profile, self.cfg.maas_network)
+        subnet_id = self.RunCommand(host, cmd)
+        cmd = "maas %s subnet update %d name=main" % (self.cfg.profile, int(subnet_id))
+        self.RunCommand(host, cmd)
         cmd = "maas %s fabrics read | jq -M '.[] | select(.name==\"%s\").id'" % (self.cfg.profile, fabric)
         fabric_id = self.RunCommand(host, cmd)
         cmd = 'maas %s vlan update %d %d primary_rack=%s dhcp_on=true' % \

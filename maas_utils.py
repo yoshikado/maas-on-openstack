@@ -37,7 +37,7 @@ class MaasUtils:
                power_parameters_os_username=%s \
                power_parameters_os_password=%s \
                power_parameters_os_authurl=%s" % (self.cfg.profile, sys_id, instance_id,
-                                                  self.cfg.credentials['tenant'],
+                                                  self.cfg.credentials['project_name'],
                                                   self.cfg.credentials['username'],
                                                   self.cfg.credentials['password'],
                                                   self.cfg.credentials['auth_url'])
@@ -68,7 +68,7 @@ class MaasUtils:
         power_parameters_os_username=%s \
         power_parameters_os_password=%s \
         power_parameters_os_authurl=%s" % (self.cfg.profile, sys_id, instance_id,
-                                           self.cfg.credentials['tenant'],
+                                           self.cfg.credentials['project_name'],
                                            self.cfg.credentials['username'],
                                            self.cfg.credentials['password'],
                                            self.cfg.credentials['auth_url'])

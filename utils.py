@@ -2,6 +2,7 @@ from pathlib import Path
 from Crypto.PublicKey import RSA
 import yaml
 import click
+import re
 
 
 def CheckDir(dir):
@@ -46,3 +47,16 @@ def TouchFile(dir, filename):
     except FileExistsError:
         return config
     return config
+
+
+def get_resolv():
+    rconf = open("/etc/resolv.conf", "r")
+    line = rconf.readline()
+    while line:
+        ip = re.search(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", line)
+        if ip is None:
+            line = rconf.readline()
+            continue
+        nameserver = ip.group()
+        line = rconf.readline()
+    return nameserver
