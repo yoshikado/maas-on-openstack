@@ -74,12 +74,25 @@ class CloudConfig:
                   network %s\n \
                   netmask %s\n \
                   gateway %s\n" % (ips[2], ips[0], ips.netmask, ips[1])
+        packages = [['maas', self.cfg.xenial_ver],
+                    ['maas-cli', self.cfg.xenial_ver],
+                    ['maas-common', self.cfg.xenial_ver],
+                    ['maas-dhcp', self.cfg.xenial_ver],
+                    ['maas-dns', self.cfg.xenial_ver],
+                    ['maas-rack-controller', self.cfg.xenial_ver],
+                    ['maas-region-controller', self.cfg.xenial_ver],
+                    ['maas-region-api', self.cfg.xenial_ver],
+                    ['python3-maas-client', self.cfg.xenial_ver],
+                    ['python3-django-maas', self.cfg.xenial_ver],
+                    ['python3-maas-provisioningserver', self.cfg.xenial_ver],
+                    ['maas-proxy', self.cfg.xenial_ver],
+                    'jq', 'python3-novaclient', 'python3-neutronclient']
         data = {'apt_sources': [{'source': 'ppa:juju/stable'},
                                 {'source': 'ppa:yoshikadokawa/maas-nova'}],
                 'debconf_selections': debconf_maas_rack + debconf_maas_region,
                 'package_update': True,
                 'package_upgrade': True,
-                'packages': ['maas', 'jq', 'python3-novaclient', 'python3-neutronclient'],
+                'packages': packages,
                 'runcmd': ['ifup ens4'],
                 'ssh_pwauth': False,
                 'write_files': [{'content': ens4cfg,

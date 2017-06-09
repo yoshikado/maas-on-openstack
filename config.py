@@ -21,6 +21,7 @@ class Config(object):
         self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20170517-disk1.img'
         self.ext_net = 'ext_net'
         self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.1lp1657941rev1'
+        self.xenial_ver = '2.1.3+bzr5573-0ubuntu1~16.04.1lp1662404rev0'
         self.keypath = Path.joinpath(self.configpath, 'ssh')
         self.keyname = 'maas_key'
 
