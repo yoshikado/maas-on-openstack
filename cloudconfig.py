@@ -87,8 +87,8 @@ class CloudConfig:
                     ['python3-maas-provisioningserver', self.cfg.xenial_ver],
                     ['maas-proxy', self.cfg.xenial_ver],
                     'jq', 'python3-novaclient', 'python3-neutronclient']
-        data = {'apt_sources': [{'source': 'ppa:juju/stable'},
-                                {'source': 'ppa:yoshikadokawa/maas-nova'}],
+        ppa = [{'source': self.cfg.maas_ppa}]
+        data = {'apt_sources': ppa,
                 'debconf_selections': debconf_maas_rack + debconf_maas_region,
                 'package_update': True,
                 'package_upgrade': True,
