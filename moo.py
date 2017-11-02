@@ -51,9 +51,12 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     image = cfg.GetImage(release)
     if not openstack.CreateKeyPair(cfg.keyname):
         return
+    port_id = openstack.CreatePort(cfg.maas_network_name)
+    instance_nics = [{'port-id': port_id}, {'net-id': openstack.GetNetID(network_name)}]
     if not openstack.BootInstance(cfg.maas_name,
                                   cfg.maas_network_name,
                                   image,
+                                  instance_nics,
                                   flavor='m1.medium',
                                   cloud_cfg_file=cloudconfig.file,
                                   default_nw=True):

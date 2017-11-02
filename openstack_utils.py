@@ -17,10 +17,10 @@ class OpenstackUtils:
         self.cfg = cfg
         self.credentials = self.cfg.credentials
         self.neutron = neutronclient.Client(**self.credentials)
-        self.nova = novaclient.Client(2, username = self.credentials["username"],
-                                      password = self.credentials["password"],
-                                      project_name = self.credentials["project_name"],
-                                      auth_url = self.credentials["auth_url"])
+        self.nova = novaclient.Client(2, username=self.credentials["username"],
+                                      password=self.credentials["password"],
+                                      project_name=self.credentials["project_name"],
+                                      auth_url=self.credentials["auth_url"])
         self.CheckAuth()
 
     def CheckAuth(self):
@@ -48,7 +48,7 @@ class OpenstackUtils:
                 click.echo('Duplicate network found: %s' % name)
                 return True
 
-    def CreateNetwork(self, cidr, name):
+    def CreateNetwork(self, cidr, name, port_security=False):
         """Create Network(network, subnet, router)"""
         if self.CheckDuplicateNetwork(cidr, name):
             return False
@@ -56,7 +56,8 @@ class OpenstackUtils:
         # Create network
         try:
             body_netw = {'network': {'name': name,
-                         'admin_state_up': True}}
+                                     'port_security_enabled': port_security,
+                                     'admin_state_up': True}}
             ret = self.neutron.create_network(body=body_netw)
         finally:
             click.echo('Create Network')
@@ -167,7 +168,8 @@ class OpenstackUtils:
             self.nova.keypairs.create(keyname, pubkey)
         return True
 
-    def BootInstance(self, name, network_name, image, flavor='m1.small', cloud_cfg_file=None, default_nw=False):
+    def BootInstance(self, name, network_name, image, instance_nics, flavor='m1.small',
+                     cloud_cfg_file=None, default_nw=False):
         defaultnet_id = self.GetNetID(self.cfg.project_net)
         maasnet_id = self.GetNetID(network_name)
         flavor = self.GetFlavor(flavor)
@@ -182,6 +184,7 @@ class OpenstackUtils:
                 return False
             else:
                 nics = [{'net-id': maasnet_id}]
+        nics = instance_nics
         key = self.cfg.keyname
         if self.GetInstanceID(name):
             click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
@@ -210,3 +213,16 @@ class OpenstackUtils:
         while not re.search(pattern, console_log):
             time.sleep(10)
             console_log = self.nova.servers.get_console_output(instance, 10)
+
+    def CreatePort(self, network_name, port_sec=False):
+        net_id = self.GetNetID(network_name)
+        # Create port
+        try:
+            body = {'port': [{
+                    'admin_state_up': True,
+                    'network_id': net_id,
+                    'port_security_enabled': False}]}
+            ret = self.neutron.create_port(body=body)
+        finally:
+            click.echo('Port created for network:%s' % network_name)
+        return ret['port']['id']
