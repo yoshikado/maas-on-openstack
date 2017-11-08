@@ -63,6 +63,9 @@ class ConfigureMAAS:
         cmd = 'maas %s ipranges create type=dynamic start_ip=%s end_ip=%s' % \
               (self.cfg.profile, self.cfg.dynamic_start_ip, self.cfg.dynamic_end_ip)
         self.RunCommand(host, cmd)
+        cmd = 'maas %s ipranges create type=reserved start_ip=%s end_ip=%s' % \
+              (self.cfg.profile, self.cfg.reserved_start_ip, self.cfg.reserved_end_ip)
+        self.RunCommand(host, cmd)
         cmd = 'maas %s rack-controllers read | jq -r .[].system_id' % (self.cfg.profile)
         rack_id = self.RunCommand(host, cmd)
         cmd = "maas %s subnets read | jq -M '.[] | \

@@ -17,8 +17,8 @@ class Config(object):
         self.dns_forwarder_ip = utils.get_resolv()
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
-        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20171011-disk1.img'
-        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20170517-disk1.img'
+        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20171026.1-disk1.img'
+        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20171101-disk1.img'
         self.ext_net = 'ext_net'
         self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.1lp1657941rev1'
         self.xenial_ver = ''
@@ -42,6 +42,8 @@ class Config(object):
     def Update(self):
         ips = IPNetwork(self.maas_network)
         self.maas_ip = ips[2]
+        self.reserved_start_ip = ips[3]
+        self.reserved_end_ip = ips[9]
         self.dynamic_start_ip = ips[10]
         self.dynamic_end_ip = ips[int(ips.size/2)]
         self.maas_url = "http://%s/MAAS" % self.maas_ip

@@ -60,7 +60,7 @@ class OpenstackUtils:
                                      'admin_state_up': True}}
             ret = self.neutron.create_network(body=body_netw)
         finally:
-            click.echo('Create Network')
+            click.echo('Create Network: %s' % name)
         try:
             # Create subnet
             network_id = ret['network']['id']
@@ -73,7 +73,7 @@ class OpenstackUtils:
                          'network_id': network_id}]}
             ret = self.neutron.create_subnet(body=body_subn)
         finally:
-            click.echo('Create subnet')
+            click.echo('Create subnet: %s' % subnet_name)
         try:
             subnet_id = ret['subnets'][0]['id']
             router_name = name + "_router"
@@ -82,19 +82,19 @@ class OpenstackUtils:
                        'admin_state_up': True}}
             ret = self.neutron.create_router(body_rt)
         finally:
-            click.echo('Create router')
+            click.echo('Create router: %s' % router_name)
         try:
             ext_net_id = self.GetNetID(self.cfg.ext_net)
             router_id = ret['router']['id']
             body_rt = {'network_id': ext_net_id}
             self.neutron.add_gateway_router(router_id, body_rt)
         finally:
-            click.echo('Add gateway to router')
+            click.echo('Add external gateway to router')
         try:
             body_rt = {'subnet_id': subnet_id}
             ret = self.neutron.add_interface_router(router_id, body_rt)
         finally:
-            click.echo('Add interface to router')
+            click.echo('Add subnet interface to router')
         return True
 
     def GetNetID(self, network_name):
@@ -153,7 +153,7 @@ class OpenstackUtils:
         return True
 
     def CreateKeyPair(self, keyname):
-        click.echo('Creating keypair')
+        click.echo('Create keypair as %s' % keyname)
         if self.KeyExist(keyname):
             keypath = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
             keypath = Path(keypath).joinpath(self.cfg.keyname)
@@ -161,7 +161,7 @@ class OpenstackUtils:
                 click.echo('ERROR: keypair in OpenStack exists, but key file not found.')
                 click.echo('%s' % keypath)
                 return False
-            click.echo('Keypair exists, skip creating')
+            click.echo('Keypair already exists ... skip creating')
             return True
         else:
             pubkey = utils.CreateSSHKey(keyname, self.cfg.keypath)
@@ -170,20 +170,20 @@ class OpenstackUtils:
 
     def BootInstance(self, name, network_name, image, instance_nics, flavor='m1.small',
                      cloud_cfg_file=None, default_nw=False):
-        defaultnet_id = self.GetNetID(self.cfg.project_net)
-        maasnet_id = self.GetNetID(network_name)
+        # defaultnet_id = self.GetNetID(self.cfg.project_net)
+        # maasnet_id = self.GetNetID(network_name)
         flavor = self.GetFlavor(flavor)
         image_id = self.GetImageID(image)
-        if default_nw:
-            if not defaultnet_id or not maasnet_id or not flavor or not image_id:
-                return False
-            else:
-                nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
-        else:
-            if not maasnet_id or not flavor or not image_id:
-                return False
-            else:
-                nics = [{'net-id': maasnet_id}]
+        # if default_nw:
+        #    if not defaultnet_id or not maasnet_id or not flavor or not image_id:
+        #        return False
+        #    else:
+        #        nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
+        # else:
+        #    if not maasnet_id or not flavor or not image_id:
+        #        return False
+        #    else:
+        #        nics = [{'net-id': maasnet_id}]
         nics = instance_nics
         key = self.cfg.keyname
         if self.GetInstanceID(name):
@@ -218,11 +218,14 @@ class OpenstackUtils:
         net_id = self.GetNetID(network_name)
         # Create port
         try:
-            body = {'port': [{
-                    'admin_state_up': True,
-                    'network_id': net_id,
-                    'port_security_enabled': False}]}
+            body = {
+                        'port': {
+                                'admin_state_up': True,
+                                'network_id': net_id,
+                                'port_security_enabled': port_sec
+                        }
+                    }
             ret = self.neutron.create_port(body=body)
         finally:
-            click.echo('Port created for network:%s' % network_name)
+            click.echo('Create port for network:%s' % network_name)
         return ret['port']['id']
