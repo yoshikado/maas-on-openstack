@@ -33,6 +33,11 @@ class Config(object):
             self.credentials['password'] = environ['OS_PASSWORD']
             self.credentials['auth_url'] = environ['OS_AUTH_URL']
             self.credentials['project_name'] = environ['OS_PROJECT_NAME']
+            self.keystonecredentials = {}
+            self.keystonecredentials['username'] = environ['OS_USERNAME']
+            self.keystonecredentials['password'] = environ['OS_PASSWORD']
+            self.keystonecredentials['auth_url'] = environ['OS_AUTH_URL']
+            self.keystonecredentials['tenant_name'] = environ['OS_PROJECT_NAME']
             self.project_net = '%s_admin_net' % environ['OS_PROJECT_NAME']
         except KeyError as e:
             click.echo('Provide OpenStack variables. %s' % e)

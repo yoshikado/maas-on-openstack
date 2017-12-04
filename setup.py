@@ -9,6 +9,7 @@ setup(
         'pyyaml',
         'fabric3',
         'python-openstackclient',
+        'python-neutronclient',
         'pycryptodome',
         'Babel!=2.4.0,>=2.3.4',
     ],

@@ -39,6 +39,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
         return False
     # Create MAAS network
     openstack = OpenstackUtils(cfg)
+    if not openstack.Init():
+        return
     if not skip_network:
         if not openstack.CreateNetwork(cfg.maas_network, cfg.maas_network_name):
             click.echo("ERROR: Network not created.")

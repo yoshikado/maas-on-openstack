@@ -10,7 +10,7 @@ import neutronclient.neutron.v2_0 as neutronv2
 import neutronclient.common.exceptions as neutronexceptions
 from glanceclient import client as glanceclient
 from keystoneauth1.identity import v2
-from keystoneauth1 import session
+from keystoneauth1 import session, exceptions
 
 
 class OpenstackUtils:
@@ -19,9 +19,10 @@ class OpenstackUtils:
     def __init__(self, cfg):
         self.cfg = cfg
         self.credentials = self.cfg.credentials
+        self.keystonecredentials = self.cfg.keystonecredentials
 
     def Init(self):
-        self.auth = v2.Password(**self.credentials)
+        self.auth = v2.Password(**self.keystonecredentials)
         if self.CheckAuth():
             self._initialize_clients()
             self.cfg.xenial_image = self.GetXenialImg()
@@ -37,18 +38,17 @@ class OpenstackUtils:
             click.echo('Auth URL error: %s' %
                        self.credentials["auth_url"])
             return False
-        if not self.auth.invalidate():
-            click.echo('Failed to authenticate with OpenStack')
-            return False
+        try:
+            sess = session.Session(auth=self.auth)
+            sess.get(self.credentials['auth_url'])
+        except exceptions.http.Unauthorized:
+            print('Failed to authorized credentials')
         return True
 
     def _initialize_clients(self):
         sess = session.Session(auth=self.auth)
         self.neutron = neutronclient.Client(**self.credentials)
-        self.nova = novaclient.Client(2, username=self.credentials["username"],
-                                      password=self.credentials["password"],
-                                      project_name=self.credentials["project_name"],
-                                      auth_url=self.credentials["auth_url"])
+        self.nova = novaclient.Client(2, session=sess)
         self.glance = glanceclient.Client(2, endpoint=sess.get_endpoint(service_type='image'), session=sess)
 
     def CheckDuplicateNetwork(self, cidr, name):
@@ -162,7 +162,8 @@ class OpenstackUtils:
                 xenial_id = image['id']
                 return xenial_id
             else:
-                click.echo("ERROR: Xenial image not found.")
+                continue
+        click.echo("ERROR: Xenial image not found.")
         return False
 
     def GetTrustyImg(self):
@@ -173,7 +174,8 @@ class OpenstackUtils:
                 xenial_id = image['id']
                 return xenial_id
             else:
-                click.echo("ERROR: Trusty image not found.")
+                continue
+        click.echo("ERROR: Trusty image not found.")
         return False
 
     def GetMAC(self, instance_id):
