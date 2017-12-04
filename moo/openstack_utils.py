@@ -2,7 +2,7 @@ import urllib
 import click
 import time
 import re
-import utils
+from moo.utils import CreateSSHKey
 from pathlib import Path
 import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
@@ -204,7 +204,7 @@ class OpenstackUtils:
             click.echo('Keypair already exists ... skip creating')
             return True
         else:
-            pubkey = utils.CreateSSHKey(keyname, self.cfg.keypath)
+            pubkey = CreateSSHKey(keyname, self.cfg.keypath)
             self.nova.keypairs.create(keyname, pubkey)
         return True
 

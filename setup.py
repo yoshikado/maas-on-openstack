@@ -18,6 +18,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        moo=moo:cli
+        moo=moo.moo:cli
     '''
 )
