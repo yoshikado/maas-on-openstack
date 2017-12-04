@@ -1,8 +1,9 @@
 from pathlib import Path
 from netaddr import IPNetwork
 from os import environ
-import utils
 import click
+
+from moo.utils import GetMOOEnvVar, TouchFile, get_resolv
 
 
 class Config(object):
@@ -14,7 +15,7 @@ class Config(object):
         self.maas_name = 'maasstack'
         self.maas_network = '10.12.1.0/24'
         self.maas_network_name = 'maas_net'
-        self.dns_forwarder_ip = utils.get_resolv()
+        self.dns_forwarder_ip = get_resolv()
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
         self.ext_net = 'ext_net'
@@ -74,9 +75,9 @@ class Config(object):
     def Init(self, config=None):
         # FIXME
         if config:
-            moo_vars = utils.GetMOOEnvVar(config)
+            moo_vars = GetMOOEnvVar(config)
         else:
-            config = utils.TouchFile(self.configpath, self.configfile)
+            config = TouchFile(self.configpath, self.configfile)
         if not self.Update():
             return False
         return True

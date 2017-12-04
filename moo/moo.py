@@ -1,9 +1,9 @@
 import click
-from config import Config
-from openstack_utils import OpenstackUtils
-from cloudconfig import CloudConfig
-from configuremaas import ConfigureMAAS
-from maas_utils import MaasUtils
+from moo.config import Config
+from moo.openstack_utils import OpenstackUtils
+from moo.cloudconfig import CloudConfig
+from moo.configuremaas import ConfigureMAAS
+from moo.maas_utils import MaasUtils
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
