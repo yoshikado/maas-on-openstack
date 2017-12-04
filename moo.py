@@ -49,6 +49,9 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     cloudconfig.CreateCloudConfig(release)
     # Deploy instance
     image = cfg.GetImage(release)
+    if image is False:
+        click.echo('ERROR: Image not found for %s' % release)
+        return
     if not openstack.CreateKeyPair(cfg.keyname):
         return
     port_id = openstack.CreatePort(cfg.project_net)

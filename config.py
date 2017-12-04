@@ -17,14 +17,14 @@ class Config(object):
         self.dns_forwarder_ip = utils.get_resolv()
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
-        self.xenial_image = 'auto-sync/ubuntu-xenial-16.04-amd64-server-20171026.1-disk1.img'
-        self.trusty_image = 'auto-sync/ubuntu-trusty-14.04-amd64-server-20171101-disk1.img'
         self.ext_net = 'ext_net'
         self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.1lp1657941rev1'
         self.xenial_ver = ''
         self.keypath = Path.joinpath(self.configpath, 'ssh')
         self.keyname = 'maas_key'
         self.maas_ppa = 'ppa:maas/stable'
+        self.xenial_image = 'xenial'
+        self.trusty_image = 'trusty'
 
     def _get_openstack_config(self):
         try:
@@ -74,6 +74,5 @@ class Config(object):
             config = utils.TouchFile(self.configpath, self.configfile)
         if not self.Update():
             return False
-        # click.echo("resolv:%s" % self.dns_forwarder_ip)
         return True
         # f = open(self.configpath, 'w')

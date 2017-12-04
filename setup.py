@@ -1,15 +1,14 @@
 from setuptools import setup
 
 setup(
-    name='MAAS on OpenStack',
+    name='pyMoo',
     version='0.2',
     py_modules=['moo'],
     install_requires=[
         'Click',
         'pyyaml',
         'fabric3',
-        'python-novaclient',
-        'python-neutronclient',
+        'python-openstackclient',
         'pycryptodome',
         'Babel!=2.4.0,>=2.3.4',
     ],

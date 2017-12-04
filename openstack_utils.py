@@ -8,6 +8,9 @@ import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
 import neutronclient.neutron.v2_0 as neutronv2
 import neutronclient.common.exceptions as neutronexceptions
+from glanceclient import client as glanceclient
+from keystoneauth1.identity import v2
+from keystoneauth1 import session
 
 
 class OpenstackUtils:
@@ -16,12 +19,15 @@ class OpenstackUtils:
     def __init__(self, cfg):
         self.cfg = cfg
         self.credentials = self.cfg.credentials
-        self.neutron = neutronclient.Client(**self.credentials)
-        self.nova = novaclient.Client(2, username=self.credentials["username"],
-                                      password=self.credentials["password"],
-                                      project_name=self.credentials["project_name"],
-                                      auth_url=self.credentials["auth_url"])
-        self.CheckAuth()
+
+    def Init(self):
+        self.auth = v2.Password(**self.credentials)
+        if self.CheckAuth():
+            self._initialize_clients()
+            self.cfg.xenial_image = self.GetXenialImg()
+            self.cfg.trusty_image = self.GetTrustyImg()
+            return True
+        return False
 
     def CheckAuth(self):
         """Check if credential info are correct"""
@@ -30,10 +36,20 @@ class OpenstackUtils:
         except urllib.error.URLError:
             click.echo('Auth URL error: %s' %
                        self.credentials["auth_url"])
-        try:
-            self.nova.authenticate()
-        except novaclient.exceptions.Unauthorized:
+            return False
+        if not self.auth.invalidate():
             click.echo('Failed to authenticate with OpenStack')
+            return False
+        return True
+
+    def _initialize_clients(self):
+        sess = session.Session(auth=self.auth)
+        self.neutron = neutronclient.Client(**self.credentials)
+        self.nova = novaclient.Client(2, username=self.credentials["username"],
+                                      password=self.credentials["password"],
+                                      project_name=self.credentials["project_name"],
+                                      auth_url=self.credentials["auth_url"])
+        self.glance = glanceclient.Client(2, endpoint=sess.get_endpoint(service_type='image'), session=sess)
 
     def CheckDuplicateNetwork(self, cidr, name):
         """Check for possible duplicate network name and cidr"""
@@ -138,6 +154,28 @@ class OpenstackUtils:
             return False
         return image.id
 
+    def GetXenialImg(self):
+        for image in self.glance.images.list():
+            if 'daily' in image['name']:
+                continue
+            elif 'xenial' in image['name']:
+                xenial_id = image['id']
+                return xenial_id
+            else:
+                click.echo("ERROR: Xenial image not found.")
+        return False
+
+    def GetTrustyImg(self):
+        for image in self.glance.images.list():
+            if 'daily' in image['name']:
+                continue
+            elif 'trusty' in image['name']:
+                xenial_id = image['id']
+                return xenial_id
+            else:
+                click.echo("ERROR: Trusty image not found.")
+        return False
+
     def GetMAC(self, instance_id):
         ports = self.neutron.list_ports()
         for port in ports['ports']:
@@ -170,20 +208,7 @@ class OpenstackUtils:
 
     def BootInstance(self, name, network_name, image, instance_nics, flavor='m1.small',
                      cloud_cfg_file=None, default_nw=False):
-        # defaultnet_id = self.GetNetID(self.cfg.project_net)
-        # maasnet_id = self.GetNetID(network_name)
         flavor = self.GetFlavor(flavor)
-        image_id = self.GetImageID(image)
-        # if default_nw:
-        #    if not defaultnet_id or not maasnet_id or not flavor or not image_id:
-        #        return False
-        #    else:
-        #        nics = [{'net-id': defaultnet_id}, {'net-id': maasnet_id}]
-        # else:
-        #    if not maasnet_id or not flavor or not image_id:
-        #        return False
-        #    else:
-        #        nics = [{'net-id': maasnet_id}]
         nics = instance_nics
         key = self.cfg.keyname
         if self.GetInstanceID(name):
@@ -191,12 +216,12 @@ class OpenstackUtils:
             return False
         try:
             with open(cloud_cfg_file) as userdata_file:
-                instance = self.nova.servers.create(name, image_id, flavor,
+                instance = self.nova.servers.create(name, image, flavor,
                                                     userdata=userdata_file,
                                                     key_name=key,
                                                     nics=nics)
         except TypeError:
-            instance = self.nova.servers.create(name, image_id, flavor,
+            instance = self.nova.servers.create(name, image, flavor,
                                                 key_name=key,
                                                 nics=nics)
         while instance.status == 'BUILD':
