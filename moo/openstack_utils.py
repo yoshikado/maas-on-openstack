@@ -43,6 +43,7 @@ class OpenstackUtils:
             sess.get(self.credentials['auth_url'])
         except exceptions.http.Unauthorized:
             print('Failed to authorized credentials')
+            return False
         return True
 
     def _initialize_clients(self):
@@ -213,17 +214,18 @@ class OpenstackUtils:
         flavor = self.GetFlavor(flavor)
         nics = instance_nics
         key = self.cfg.keyname
+        image_id = self.GetImageID(image)
         if self.GetInstanceID(name):
             click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
             return False
         try:
             with open(cloud_cfg_file) as userdata_file:
-                instance = self.nova.servers.create(name, image, flavor,
+                instance = self.nova.servers.create(name, image_id, flavor,
                                                     userdata=userdata_file,
                                                     key_name=key,
                                                     nics=nics)
         except TypeError:
-            instance = self.nova.servers.create(name, image, flavor,
+            instance = self.nova.servers.create(name, image_id, flavor,
                                                 key_name=key,
                                                 nics=nics)
         while instance.status == 'BUILD':

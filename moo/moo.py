@@ -109,6 +109,8 @@ def add_node(cfg, name, image, flavor, tag):
     if not cfg.Init():
         return False
     openstack = OpenstackUtils(cfg)
+    if not openstack.Init():
+        return
     maasnet_id = openstack.GetNetID(cfg.maas_network_name)
     instance_nics = [{'net-id': maasnet_id}]
     if not openstack.BootInstance(name, cfg.maas_network_name, image, instance_nics, flavor=flavor):

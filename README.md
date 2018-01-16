@@ -3,16 +3,10 @@ Deploy MAAS on OpenStack
 
 How to deploy MAAS on OpenStack
 -------------------------------
-### Prerequisite
-In order to have MAAS on Openstack running, first install the following packages.
+### Snap
+You can install MAAS on OpenStack(moo) from snap.
 ```
-$ sudo apt install virtualenv libssl-dev python3-dev build-essential libffi-dev
-```
-After you cloned this repository, you can simply install in virtualenv.
-```
-$ virtualenv -p python3 ~/venv
-$ source ~/venv/bin/activate
-$ pip install --editable .
+$ sudo snap install moo
 ```
 
 ### Deploy

@@ -94,7 +94,11 @@ class MaasUtils:
     def RunCommand(self, cmd):
         key = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
         key = Path(key).joinpath(self.cfg.keyname)
-        with settings(hide('everything'), user='ubuntu', host_string=self.maas_ip, key_filename=key.as_posix(), warn_only=True):
+        with settings(hide('everything'),
+                      user='ubuntu',
+                      host_string=self.maas_ip,
+                      key_filename=key.as_posix(),
+                      warn_only=True):
             results = fabric_run(cmd)
         # FIXME
         # click.echo(results)

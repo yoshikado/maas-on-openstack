@@ -60,6 +60,10 @@ class ConfigureMAAS:
         self.RunCommand(host, cmd)
         cmd = "maas %s boot-resources import" % (self.cfg.profile)
         self.RunCommand(host, cmd)
+        is_importing = "true"
+        while is_importing == "true":
+            cmd = "maas %s boot-resources is-importing" % (self.cfg.profile)
+            is_importing = self.RunCommand(host, cmd)
         cmd = 'maas %s ipranges create type=dynamic start_ip=%s end_ip=%s' % \
               (self.cfg.profile, self.cfg.dynamic_start_ip, self.cfg.dynamic_end_ip)
         self.RunCommand(host, cmd)
@@ -74,7 +78,8 @@ class ConfigureMAAS:
         cmd = "maas %s subnets read| jq -r '.[] | \
               select(.cidr==\"%s\").vlan.fabric'" % (self.cfg.profile, self.cfg.maas_network)
         fabric = self.RunCommand(host, cmd)
-        cmd = "maas %s subnets read | jq -M '.[]| select(.name==\"%s\").id'" % (self.cfg.profile, self.cfg.maas_network)
+        cmd = "maas %s subnets read | jq -M '.[]| select(.name==\"%s\").id'" % \
+              (self.cfg.profile, self.cfg.maas_network)
         subnet_id = self.RunCommand(host, cmd)
         cmd = "maas %s subnet update %d name=main" % (self.cfg.profile, int(subnet_id))
         self.RunCommand(host, cmd)
@@ -104,7 +109,10 @@ class ConfigureMAAS:
     def RunCommand(self, host, cmd):
         key = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
         key = Path(key).joinpath(self.cfg.keyname)
-        with settings(hide('everything'), user='ubuntu', host_string=host, key_filename=key.as_posix(), warn_only=True):
+        with settings(hide('everything'), user='ubuntu',
+                      host_string=host,
+                      key_filename=key.as_posix(),
+                      warn_only=True):
             results = fabric_run(cmd)
         # click.echo(results)
         return results
