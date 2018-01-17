@@ -2,7 +2,7 @@ import click
 from pathlib import Path
 from netaddr import IPNetwork
 from fabric.operations import run as fabric_run
-from fabric.context_managers import settings, hide
+from fabric.context_managers import settings, hide, show
 
 
 class ConfigureMAAS:
@@ -62,7 +62,7 @@ class ConfigureMAAS:
         self.RunCommand(host, cmd)
         is_importing = "true"
         while is_importing == "true":
-            cmd = "maas %s boot-resources is-importing" % (self.cfg.profile)
+            cmd = "maas %s boot-resources is-importing | awk 'NR==1'" % (self.cfg.profile)
             is_importing = self.RunCommand(host, cmd)
         cmd = 'maas %s ipranges create type=dynamic start_ip=%s end_ip=%s' % \
               (self.cfg.profile, self.cfg.dynamic_start_ip, self.cfg.dynamic_end_ip)
@@ -109,10 +109,17 @@ class ConfigureMAAS:
     def RunCommand(self, host, cmd):
         key = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
         key = Path(key).joinpath(self.cfg.keyname)
-        with settings(hide('everything'), user='ubuntu',
-                      host_string=host,
-                      key_filename=key.as_posix(),
-                      warn_only=True):
-            results = fabric_run(cmd)
+        if self.cfg.verbose is True:
+            with settings(show('everything'), user='ubuntu',
+                          host_string=host,
+                          key_filename=key.as_posix(),
+                          warn_only=True):
+                results = fabric_run(cmd)
+        else:
+            with settings(hide('everything'), user='ubuntu',
+                          host_string=host,
+                          key_filename=key.as_posix(),
+                          warn_only=True):
+                results = fabric_run(cmd)
         # click.echo(results)
         return results

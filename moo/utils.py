@@ -3,6 +3,7 @@ from Crypto.PublicKey import RSA
 import yaml
 import click
 import re
+import urllib.request
 
 
 def CheckDir(dir):
@@ -60,3 +61,14 @@ def get_resolv():
         nameserver = ip.group()
         line = rconf.readline()
     return nameserver
+
+
+def url_is_alive(url):
+    request = urllib.request.Request(url)
+    request.get_method = lambda: 'HEAD'
+
+    try:
+        urllib.request.urlopen(request)
+        return True
+    except urllib.request.HTTPError:
+        return False

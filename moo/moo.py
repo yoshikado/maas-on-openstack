@@ -30,7 +30,7 @@ def cli(cfg, verbose):
 def deploy(cfg, release, config, name, network, network_name, skip_network):
     """Deploy MAAS environment."""
     if cfg.verbose:
-        click.echo('We are in verbose mode')
+        click.echo('Running in verbose mode')
     if name or network or network_name:
         cfg.maas_name = name if name else cfg.maas_name
         cfg.maas_network = network if network else cfg.maas_network

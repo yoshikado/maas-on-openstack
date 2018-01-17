@@ -1,4 +1,4 @@
-import urllib
+import urllib.request
 import click
 import time
 import re
@@ -34,7 +34,7 @@ class OpenstackUtils:
         """Check if credential info are correct"""
         try:
             urllib.request.urlopen(self.credentials["auth_url"])
-        except urllib.error.URLError:
+        except urllib.request.HTTPError:
             click.echo('Auth URL error: %s' %
                        self.credentials["auth_url"])
             return False
