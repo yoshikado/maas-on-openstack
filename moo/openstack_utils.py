@@ -209,8 +209,8 @@ class OpenstackUtils:
             self.nova.keypairs.create(keyname, pubkey)
         return True
 
-    def BootInstance(self, name, network_name, image, instance_nics, flavor='m1.small',
-                     cloud_cfg_file=None, default_nw=False):
+    def BootInstance(self, name, image, instance_nics, flavor='m1.small',
+                     cloud_cfg_file=None, config_drive=None, files=None):
         flavor = self.GetFlavor(flavor)
         nics = instance_nics
         key = self.cfg.keyname
@@ -223,7 +223,9 @@ class OpenstackUtils:
                 instance = self.nova.servers.create(name, image_id, flavor,
                                                     userdata=userdata_file,
                                                     key_name=key,
-                                                    nics=nics)
+                                                    nics=nics,
+                                                    files=files,
+                                                    config_drive=config_drive)
         except TypeError:
             instance = self.nova.servers.create(name, image_id, flavor,
                                                 key_name=key,
