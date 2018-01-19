@@ -210,26 +210,41 @@ class OpenstackUtils:
         return True
 
     def BootInstance(self, name, image, instance_nics, flavor='m1.small',
-                     cloud_cfg_file=None, config_drive=None, files=None):
+                     cloud_cfg_file=None, config_drive=None, src=None, dst=None):
         flavor = self.GetFlavor(flavor)
-        nics = instance_nics
         key = self.cfg.keyname
         image_id = self.GetImageID(image)
+        files = {}
+        userdata = None
         if self.GetInstanceID(name):
             click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
             return False
+        if cloud_cfg_file:
+            try:
+                userdata = open(cloud_cfg_file)
+            except IOError as e:
+                click.echo("Can't open '%s': %s" % cloud_cfg_file, e)
+                return False
+        if src or dst:
+            try:
+                files[dst] = open(src, 'rb')
+            except IOError as e:
+                click.echo("Can't open '%s': %s" % src, e)
+                return False
         try:
-            with open(cloud_cfg_file) as userdata_file:
-                instance = self.nova.servers.create(name, image_id, flavor,
-                                                    userdata=userdata_file,
-                                                    key_name=key,
-                                                    nics=nics,
-                                                    files=files,
-                                                    config_drive=config_drive)
-        except TypeError:
             instance = self.nova.servers.create(name, image_id, flavor,
+                                                userdata=userdata,
                                                 key_name=key,
-                                                nics=nics)
+                                                nics=instance_nics,
+                                                files=files,
+                                                config_drive=config_drive)
+        finally:
+            # Clean up open files - make sure they are not strings
+            for f in files:
+                if hasattr(f, 'close'):
+                    f.close()
+            if hasattr(userdata, 'close'):
+                userdata.close()
         while instance.status == 'BUILD':
             click.echo("Waiting for instance to be active.")
             time.sleep(10)

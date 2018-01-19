@@ -90,21 +90,8 @@ class ConfigureMAAS:
         self.RunCommand(host, cmd)
         cmd = "maas %s maas set-config name=upstream_dns value=%s" % (self.cfg.profile, self.cfg.dns_forwarder_ip)
         self.RunCommand(host, cmd)
-        cmd = "maas %s maas set-config name=dnssec_validation value=no" % (self.cfg.profile)
-        self.RunCommand(host, cmd)
-        cmd = "sudo maas-region local_config_set --maas-url %s" % (self.cfg.maas_url)
-        self.RunCommand(host, cmd)
-        cmd = "sudo maas-rack config --region-url %s" % (self.cfg.maas_url)
-        self.RunCommand(host, cmd)
-        cmd = "echo \"maas-rack-controller maas-rack-controller/maas-url string %s\" | \
-               sudo debconf-set-selections" % (self.cfg.maas_url)
-        self.RunCommand(host, cmd)
-        cmd = "echo \"maas-region-controller maas/default-maas-url string %s\" | \
-               sudo debconf-set-selections" % (self.cfg.maas_ip)
-        self.RunCommand(host, cmd)
         cmd = "maas %s sshkeys create key=\"`cat ~/.ssh/authorized_keys`\"" % (self.cfg.profile)
         self.RunCommand(host, cmd)
-        self.RunCommand(host, 'sleep 30s; sudo reboot')
 
     def RunCommand(self, host, cmd):
         key = Path(self.cfg.configpath).joinpath(self.cfg.keypath)

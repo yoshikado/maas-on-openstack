@@ -8,8 +8,8 @@ class CloudConfig:
     """cloud-config Class"""
 
     def __init__(self, cfg):
-        self.cloudcfgfile = 'cloudcfgtmp.yaml'
-        self.networkcfgfile = 'networkcfgtmp.yaml'
+        self.cloudcfgfile = str(Path(Path.home()).joinpath('cloudcfgtmp.yaml'))
+        self.networkcfgfile = str(Path(Path.home()).joinpath('networkcfgtmp.yaml'))
         self.cfg = cfg
 
     def CreateCloudConfig(self, release):
@@ -84,9 +84,9 @@ class CloudConfig:
         data = {'network': {'version': 1,
                             'config': [{'subnets': [{'dns_nameservers': [self.cfg.dns_forwarder_ip],
                                                      'type': 'static',
-                                                     'gateway': ips[1],
-                                                     'address': self.cfg.maas_ip}],
+                                                     'gateway': str(ips[1]),
+                                                     'address': str(self.cfg.maas_ip)}],
                                         'type': 'physical',
-                                        'name': 'ens3'}]}}
+                                        'name': self.interface}]}}
         yaml.safe_dump(data, f, encoding='utf8', default_flow_style=False)
         f.close()

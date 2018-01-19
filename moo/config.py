@@ -47,11 +47,11 @@ class Config(object):
 
     def Update(self):
         ips = IPNetwork(self.maas_network)
-        self.maas_ip = ips[2]
-        self.reserved_start_ip = ips[3]
-        self.reserved_end_ip = ips[9]
-        self.dynamic_start_ip = ips[10]
-        self.dynamic_end_ip = ips[int(ips.size/2)]
+        self.maas_ip = str(ips[2])
+        self.reserved_start_ip = str(ips[3])
+        self.reserved_end_ip = str(ips[9])
+        self.dynamic_start_ip = str(ips[10])
+        self.dynamic_end_ip = str(ips[int(ips.size/2)])
         self.maas_url = "http://%s/MAAS" % self.maas_ip
         self.maas_url_rack = "http://%s:5240/MAAS" % self.maas_ip
         self.sed_maas_url_region = "http:\/\/%s\/MAAS" % self.maas_ip

@@ -57,7 +57,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     if not openstack.CreateKeyPair(cfg.keyname):
         return
     maasnet_id = openstack.GetNetID(cfg.maas_network_name)
-    files = [{'/etc/cloud/cloud.cfg.d/maas-networking.cfg': cloudconfig.networkcfgfile}]
+    src_file = cloudconfig.networkcfgfile
+    dst_file = '/etc/cloud/cloud.cfg.d/maas-networking.cfg'
     instance_nics = [{'net-id': maasnet_id}]
     if not openstack.BootInstance(cfg.maas_name,
                                   image,
@@ -65,14 +66,14 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
                                   flavor='m1.medium',
                                   cloud_cfg_file=cloudconfig.cloudcfgfile,
                                   config_drive=True,
-                                  files=files):
+                                  src=src_file,
+                                  dst=dst_file):
         return
     openstack.WaitCloudInit(cfg.maas_name)
     # Configure MAAS
-    ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
     configuremaas = ConfigureMAAS(cfg)
-    configuremaas.run(release, ip)
-    click.echo('Finished deploying to %s' % ip)
+    configuremaas.run(release, cfg.maas_ip)
+    click.echo('Finished deploying')
 
 
 @cli.command()
@@ -117,6 +118,5 @@ def add_node(cfg, name, image, flavor, tag):
         return
     instance_id = openstack.GetInstanceID(name)
     mac = openstack.GetMAC(openstack.GetInstanceID(name))
-    ip = openstack.GetIP(cfg.maas_name, cfg.project_net)
-    maas = MaasUtils(cfg, ip)
+    maas = MaasUtils(cfg, cfg.maas_ip)
     maas.UpdateHost(name, instance_id, mac, tag)
