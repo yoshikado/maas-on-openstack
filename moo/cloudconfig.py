@@ -20,14 +20,14 @@ class CloudConfig:
         else:
             print('%s is not supported.' % release)
             return False
-        self.GenerateCloudConfig()
-        self.GenerateCloudNetConfig()
+        self.GenerateCloudConfig(release)
+        self.GenerateCloudNetConfig(release)
         return True
 
     def SetTrustyVar(self):
-        self.debconf_maas_rack = "maas-cluster-controller maas-cluster-controller/maas-url string %s\n" % self.cfg.maas_url
+        self.debconf_maas_rack = "maas-cluster-controller maas-cluster-controller/maas-url string %s\n" \
+                                 % self.cfg.maas_url
         self.debconf_maas_region = "maas-region-controller-min maas/default-maas-url string %s\n" % self.cfg.maas_ip
-        self.interface = "eth0"
         self.packages = [['maas', self.cfg.trusty_ver],
                          ['maas-cluster-controller', self.cfg.trusty_ver],
                          ['maas-region-controller', self.cfg.trusty_ver],
@@ -42,10 +42,17 @@ class CloudConfig:
                          ['maas-proxy', self.cfg.trusty_ver],
                          'jq', 'python-novaclient', 'python-neutronclient']
         self.ppa = [{'source': 'ppa:yoshikadokawa/maas-nova'}]
+        ips = IPNetwork(self.cfg.maas_network)
+        self.eth1cfg = "auto eth1\n\
+iface eth1 inet static\n\
+address %s\n\
+network %s\n\
+netmask %s\n\
+gateway %s\n" % (ips[2], ips[0], ips.netmask, ips[1])
 
     def SetXenialVar(self):
-        self.debconf_maas_rack = "maas-cluster-controller maas-cluster-controller/maas-url string %s\n" % self.cfg.maas_url
-        self.debconf_maas_region = "maas-region-controller-min maas/default-maas-url string %s\n" % self.cfg.maas_ip
+        self.debconf_maas_rack = ""
+        self.debconf_maas_region = ""
         self.interface = "ens3"
         self.packages = [['maas', self.cfg.xenial_ver],
                          ['maas-cli', self.cfg.xenial_ver],
@@ -62,7 +69,7 @@ class CloudConfig:
                          'jq', 'python3-novaclient', 'python3-neutronclient']
         self.ppa = [{'source': 'ppa:yoshikadokawa/maas-nova'}]
 
-    def GenerateCloudConfig(self):
+    def GenerateCloudConfig(self, release):
         if Path(self.cloudcfgfile).is_file():
             remove(self.cloudcfgfile)
         f = open(self.cloudcfgfile, 'a', encoding='utf-8')
@@ -73,10 +80,16 @@ class CloudConfig:
                 'package_upgrade': True,
                 'packages': self.packages,
                 'ssh_pwauth': False}
+        if release == 'trusty':
+            data.update({'runcmd': ['ifup eth1'],
+                         'write_files': [{'content': self.eth1cfg,
+                                           'path': '/etc/network/interfaces.d/eth1.cfg'}]})
         yaml.safe_dump(data, f, encoding='utf8', default_flow_style=False)
         f.close()
 
-    def GenerateCloudNetConfig(self):
+    def GenerateCloudNetConfig(self, release):
+        if release == 'trusty':
+            return True
         if Path(self.networkcfgfile).is_file():
             remove(self.networkcfgfile)
         f = open(self.networkcfgfile, 'a', encoding='utf-8')
@@ -90,3 +103,4 @@ class CloudConfig:
                                         'name': self.interface}]}}
         yaml.safe_dump(data, f, encoding='utf8', default_flow_style=False)
         f.close()
+

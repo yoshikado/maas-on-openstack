@@ -19,7 +19,7 @@ class Config(object):
         self.configpath = Path(Path.home()).joinpath('.moo')
         self.configfile = 'moo_environment.yaml'
         self.ext_net = 'ext_net'
-        self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.1lp1657941rev1'
+        self.trusty_ver = '1.9.5+bzr4599-0ubuntu1~14.04.2lp1657941rev1'
         self.xenial_ver = ''
         self.keypath = Path.joinpath(self.configpath, 'ssh')
         self.keyname = 'maas_key'

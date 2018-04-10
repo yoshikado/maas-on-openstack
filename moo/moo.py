@@ -57,18 +57,28 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     if not openstack.CreateKeyPair(cfg.keyname):
         return
     maasnet_id = openstack.GetNetID(cfg.maas_network_name)
-    src_file = cloudconfig.networkcfgfile
-    dst_file = '/etc/cloud/cloud.cfg.d/maas-networking.cfg'
-    instance_nics = [{'net-id': maasnet_id}]
-    if not openstack.BootInstance(cfg.maas_name,
-                                  image,
-                                  instance_nics,
-                                  flavor='m1.medium',
-                                  cloud_cfg_file=cloudconfig.cloudcfgfile,
-                                  config_drive=True,
-                                  src=src_file,
-                                  dst=dst_file):
-        return
+    if release == 'xenial':
+        src_file = cloudconfig.networkcfgfile
+        dst_file = '/etc/cloud/cloud.cfg.d/maas-networking.cfg'
+        instance_nics = [{'net-id': maasnet_id}]
+        if not openstack.BootInstance(cfg.maas_name,
+                                      image,
+                                      instance_nics,
+                                      flavor='m1.medium',
+                                      cloud_cfg_file=cloudconfig.cloudcfgfile,
+                                      config_drive=True,
+                                      src=src_file,
+                                      dst=dst_file):
+            return
+    elif release == 'trusty':
+        port_id = openstack.CreatePort(cfg.project_net)
+        instance_nics = [{'port-id': port_id}, {'net-id': maasnet_id}]
+        if not openstack.BootInstance(cfg.maas_name,
+                                      image,
+                                      instance_nics,
+                                      flavor='m1.medium',
+                                      cloud_cfg_file=cloudconfig.cloudcfgfile):
+            return
     openstack.WaitCloudInit(cfg.maas_name)
     # Configure MAAS
     configuremaas = ConfigureMAAS(cfg)
@@ -120,3 +130,4 @@ def add_node(cfg, name, image, flavor, tag):
     mac = openstack.GetMAC(openstack.GetInstanceID(name))
     maas = MaasUtils(cfg, cfg.maas_ip)
     maas.UpdateHost(name, instance_id, mac, tag)
+
