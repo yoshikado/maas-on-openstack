@@ -4,9 +4,12 @@ from moo.openstack_utils import OpenstackUtils
 from moo.cloudconfig import CloudConfig
 from moo.configuremaas import ConfigureMAAS
 from moo.maas_utils import MaasUtils
+from moo.logging import Logging
 
 
 pass_config = click.make_pass_decorator(Config, ensure=True)
+LOG = Logging(__name__)
+log = LOG.getLogger()
 
 
 @click.group()
@@ -14,6 +17,8 @@ pass_config = click.make_pass_decorator(Config, ensure=True)
 @pass_config
 def cli(cfg, verbose):
     cfg.verbose = verbose
+    if cfg.verbose:
+        LOG.SetLevel("DEBUG")
 
 
 @cli.command()
@@ -29,8 +34,7 @@ def cli(cfg, verbose):
 @pass_config
 def deploy(cfg, release, config, name, network, network_name, skip_network):
     """Deploy MAAS environment."""
-    if cfg.verbose:
-        click.echo('Running in verbose mode')
+    log.debug('Running in verbose mode')
     if name or network or network_name:
         cfg.maas_name = name if name else cfg.maas_name
         cfg.maas_network = network if network else cfg.maas_network
