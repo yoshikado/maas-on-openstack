@@ -16,9 +16,9 @@ log = LOG.getLogger()
 @click.option('-v', '--verbose', is_flag=True)
 @pass_config
 def cli(cfg, verbose):
-    cfg.verbose = verbose
-    if cfg.verbose:
-        LOG.SetLevel("DEBUG")
+    if verbose:
+        cfg.log_level = "DEBUG"
+    LOG.SetLevel(cfg.log_level)
 
 
 @cli.command()
@@ -47,8 +47,8 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
         return
     if not skip_network:
         if not openstack.CreateNetwork(cfg.maas_network, cfg.maas_network_name):
-            click.echo("ERROR: Network not created.")
-            click.echo("If you don't need to create network, use '--skip-network' option.")
+            log.error("ERROR: Network not created.")
+            log.error("If you don't need to create network, use '--skip-network' option.")
             return
     # Create cloud-config file
     cloudconfig = CloudConfig(cfg)
@@ -56,7 +56,7 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     # Deploy instance
     image = cfg.GetImage(release)
     if image is False:
-        click.echo('ERROR: Image not found for %s' % release)
+        log.error('ERROR: Image not found for %s' % release)
         return
     if not openstack.CreateKeyPair(cfg.keyname):
         return
@@ -87,7 +87,7 @@ def deploy(cfg, release, config, name, network, network_name, skip_network):
     # Configure MAAS
     configuremaas = ConfigureMAAS(cfg)
     configuremaas.run(release, cfg.maas_ip)
-    click.echo('Finished deploying')
+    log.info('Finished deploying')
 
 
 @cli.command()
@@ -101,7 +101,7 @@ def add_network(cfg, cidr, name):
         return False
     openstack = OpenstackUtils(cfg)
     if not openstack.CreateNetwork(cidr, name):
-        click.echo("ERROR: Network not created.")
+        log.error("ERROR: Network not created.")
 
 
 @cli.command()
@@ -109,7 +109,7 @@ def add_network(cfg, cidr, name):
 def create_pxeimage(cfg):
     """Create iPXE image for OpenStack"""
     # FIXME
-    click.echo('Under construction')
+    log.info('Under construction')
 
 
 @cli.command()
@@ -132,6 +132,5 @@ def add_node(cfg, name, image, flavor, tag):
         return
     instance_id = openstack.GetInstanceID(name)
     mac = openstack.GetMAC(openstack.GetInstanceID(name))
-    maas = MaasUtils(cfg, cfg.maas_ip)
-    maas.UpdateHost(name, instance_id, mac, tag)
-
+    maas = MaasUtils(cfg)
+    maas.UpdateHost(name, instance_id, mac, tag, cfg.maas_ip)

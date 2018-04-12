@@ -1,15 +1,18 @@
 from pathlib import Path
 from netaddr import IPNetwork
 from os import environ
-import click
 
 from moo.utils import GetMOOEnvVar, TouchFile, get_resolv
+from moo.logging import Logging
+
+LOG = Logging(__name__)
+log = LOG.getLogger()
 
 
 class Config(object):
 
     def __init__(self):
-        self.verbose = False
+        self.log_level = "WARNING"
         self.profile = 'admin'
         self.passw = 'ubuntu'
         self.maas_name = 'maasstack'
@@ -41,7 +44,7 @@ class Config(object):
             self.keystonecredentials['tenant_name'] = environ['OS_PROJECT_NAME']
             self.project_net = '%s_admin_net' % environ['OS_PROJECT_NAME']
         except KeyError as e:
-            click.echo('Provide OpenStack variables. %s' % e)
+            log.error('Provide OpenStack variables. %s' % e)
             return False
         return True
 
@@ -62,7 +65,7 @@ class Config(object):
 
     def ValidateConfig(self):
         # FIXME
-        click.echo('validate')
+        log.info('validate')
 
     def GetImage(self, release):
         if release == 'trusty':
@@ -70,7 +73,7 @@ class Config(object):
         elif release == 'xenial':
             return self.xenial_image
         else:
-            click.echo('The distribution is not supported')
+            log.error('The distribution is not supported')
 
     def Init(self, config=None):
         # FIXME

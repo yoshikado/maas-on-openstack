@@ -8,6 +8,7 @@ class Logging:
         self.handler = StreamHandler()
         self.logger.addHandler(self.handler)
         self.logger.propagate = False
+        self.SetLevel("WARNING")
 
     def SetLevel(self, level):
         if level == 'DEBUG':

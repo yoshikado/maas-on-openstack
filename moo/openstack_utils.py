@@ -3,6 +3,7 @@ import click
 import time
 import re
 from moo.utils import CreateSSHKey
+from moo.logging import Logging
 from pathlib import Path
 import novaclient.client as novaclient
 from neutronclient.v2_0 import client as neutronclient
@@ -11,6 +12,9 @@ import neutronclient.common.exceptions as neutronexceptions
 from glanceclient import client as glanceclient
 from keystoneauth1.identity import v2
 from keystoneauth1 import session, exceptions
+
+LOG = Logging(__name__)
+log = LOG.getLogger()
 
 
 class OpenstackUtils:
@@ -35,7 +39,7 @@ class OpenstackUtils:
         try:
             urllib.request.urlopen(self.credentials["auth_url"])
         except urllib.request.HTTPError:
-            click.echo('Auth URL error: %s' %
+            log.error('Auth URL error: %s' %
                        self.credentials["auth_url"])
             return False
         try:
@@ -57,12 +61,12 @@ class OpenstackUtils:
         subn = self.neutron.list_subnets()
         for i in range(len(subn['subnets'])):
             if cidr == subn['subnets'][i]['cidr']:
-                click.echo('Duplicate subnet found: %s' % cidr)
+                log.warning('Duplicate subnet found: %s' % cidr)
                 return True
         netw = self.neutron.list_networks()
         for i in range(len(netw['networks'])):
             if name == netw['networks'][i]['name']:
-                click.echo('Duplicate network found: %s' % name)
+                log.warning('Duplicate network found: %s' % name)
                 return True
 
     def CreateNetwork(self, cidr, name, port_security=False):
@@ -77,7 +81,7 @@ class OpenstackUtils:
                                      'admin_state_up': True}}
             ret = self.neutron.create_network(body=body_netw)
         finally:
-            click.echo('Create Network: %s' % name)
+            log.debug('Create Network: %s' % name)
         try:
             # Create subnet
             network_id = ret['network']['id']
@@ -90,7 +94,7 @@ class OpenstackUtils:
                          'network_id': network_id}]}
             ret = self.neutron.create_subnet(body=body_subn)
         finally:
-            click.echo('Create subnet: %s' % subnet_name)
+            log.debug('Create subnet: %s' % subnet_name)
         try:
             subnet_id = ret['subnets'][0]['id']
             router_name = name + "_router"
@@ -99,26 +103,26 @@ class OpenstackUtils:
                        'admin_state_up': True}}
             ret = self.neutron.create_router(body_rt)
         finally:
-            click.echo('Create router: %s' % router_name)
+            log.debug('Create router: %s' % router_name)
         try:
             ext_net_id = self.GetNetID(self.cfg.ext_net)
             router_id = ret['router']['id']
             body_rt = {'network_id': ext_net_id}
             self.neutron.add_gateway_router(router_id, body_rt)
         finally:
-            click.echo('Add external gateway to router')
+            log.debug('Add external gateway to router')
         try:
             body_rt = {'subnet_id': subnet_id}
             ret = self.neutron.add_interface_router(router_id, body_rt)
         finally:
-            click.echo('Add subnet interface to router')
+            log.debug('Add subnet interface to router')
         return True
 
     def GetNetID(self, network_name):
         try:
             detail = neutronv2.find_resource_by_name_or_id(self.neutron, 'network', network_name)
         except neutronexceptions.NotFound as e:
-            click.echo(e)
+            log.error(e)
             return e
         return detail['id']
 
@@ -126,7 +130,7 @@ class OpenstackUtils:
         try:
             instance_id = self.nova.servers.find(name=instance_name).id
         except novaclient.exceptions.NotFound as e:
-            click.echo(e)
+            log.error(e)
             return False
         return instance_id
 
@@ -134,7 +138,7 @@ class OpenstackUtils:
         try:
             ips = self.nova.servers.ips(self.nova.servers.find(name=name))
         except novaclient.exceptions.NotFound as e:
-            click.echo(e)
+            log.error(e)
             return False
         ip = ips[network_name][0]['addr']
         return ip
@@ -143,7 +147,7 @@ class OpenstackUtils:
         try:
             flavor = self.nova.flavors.find(name=flavor_name)
         except novaclient.exceptions.NotFound as e:
-            click.echo(e)
+            log.error(e)
             return False
         return flavor
 
@@ -151,7 +155,7 @@ class OpenstackUtils:
         try:
             image = self.nova.glance.find_image(name_or_id=image_name)
         except novaclient.exceptions.NotFound as e:
-            click.echo(e)
+            log.error(e)
             return False
         return image.id
 
@@ -164,7 +168,7 @@ class OpenstackUtils:
                 return xenial_id
             else:
                 continue
-        click.echo("ERROR: Xenial image not found.")
+        log.error("ERROR: Xenial image not found.")
         return False
 
     def GetTrustyImg(self):
@@ -176,7 +180,7 @@ class OpenstackUtils:
                 return xenial_id
             else:
                 continue
-        click.echo("ERROR: Trusty image not found.")
+        log.error("ERROR: Trusty image not found.")
         return False
 
     def GetMAC(self, instance_id):
@@ -194,15 +198,15 @@ class OpenstackUtils:
         return True
 
     def CreateKeyPair(self, keyname):
-        click.echo('Create keypair as %s' % keyname)
+        log.debug('Create keypair as %s' % keyname)
         if self.KeyExist(keyname):
             keypath = Path(self.cfg.configpath).joinpath(self.cfg.keypath)
             keypath = Path(keypath).joinpath(self.cfg.keyname)
             if not keypath.is_file():
-                click.echo('ERROR: keypair in OpenStack exists, but key file not found.')
-                click.echo('%s' % keypath)
+                log.error('ERROR: keypair in OpenStack exists, but key file not found.')
+                log.error('%s' % keypath)
                 return False
-            click.echo('Keypair already exists ... skip creating')
+            log.debug('Keypair already exists ... skip creating')
             return True
         else:
             pubkey = CreateSSHKey(keyname, self.cfg.keypath)
@@ -217,19 +221,19 @@ class OpenstackUtils:
         files = {}
         userdata = None
         if self.GetInstanceID(name):
-            click.echo('ERROR:Could not create instance. Instance already created: %s' % name)
+            log.error('ERROR:Could not create instance. Instance already created: %s' % name)
             return False
         if cloud_cfg_file:
             try:
                 userdata = open(cloud_cfg_file)
             except IOError as e:
-                click.echo("Can't open '%s': %s" % cloud_cfg_file, e)
+                log.error("Can't open '%s': %s" % cloud_cfg_file, e)
                 return False
         if src or dst:
             try:
                 files[dst] = open(src, 'rb')
             except IOError as e:
-                click.echo("Can't open '%s': %s" % src, e)
+                log.error("Can't open '%s': %s" % src, e)
                 return False
         try:
             instance = self.nova.servers.create(name, image_id, flavor,
@@ -246,7 +250,7 @@ class OpenstackUtils:
             if hasattr(userdata, 'close'):
                 userdata.close()
         while instance.status == 'BUILD':
-            click.echo("Waiting for instance to be active.")
+            log.info("Waiting for instance to be active.")
             time.sleep(10)
             instance = self.nova.servers.get(instance.id)
         return True
@@ -255,7 +259,7 @@ class OpenstackUtils:
         instance = self.GetInstanceID(instance_name)
         console_log = self.nova.servers.get_console_output(instance, 10)
         pattern = "Cloud-init v.* finished at"
-        click.echo("Waiting for cloud-init to finish. This will take a while...")
+        log.info("Waiting for cloud-init to finish. This will take a while...")
         while not re.search(pattern, console_log):
             time.sleep(10)
             console_log = self.nova.servers.get_console_output(instance, 10)
@@ -273,5 +277,5 @@ class OpenstackUtils:
                     }
             ret = self.neutron.create_port(body=body)
         finally:
-            click.echo('Create port for network:%s' % network_name)
+            log.debug('Create port for network:%s' % network_name)
         return ret['port']['id']
