@@ -1,5 +1,4 @@
 import urllib.request
-import click
 import time
 import re
 from moo.utils import CreateSSHKey
@@ -40,7 +39,7 @@ class OpenstackUtils:
             urllib.request.urlopen(self.credentials["auth_url"])
         except urllib.request.HTTPError:
             log.error('Auth URL error: %s' %
-                       self.credentials["auth_url"])
+                      self.credentials["auth_url"])
             return False
         try:
             sess = session.Session(auth=self.auth)
