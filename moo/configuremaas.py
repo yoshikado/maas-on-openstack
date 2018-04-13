@@ -10,6 +10,7 @@ class ConfigureMAAS:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        LOG.SetLevel(self.cfg.log_level)
 
     def run(self, release, host):
         """ Run a command on the host. Assumes user has SSH keys setup """

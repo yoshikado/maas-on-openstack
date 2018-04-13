@@ -11,6 +11,7 @@ class MaasUtils:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        LOG.SetLevel(self.cfg.log_level)
 
     def UpdateHost(self, instance_name, instance_id, mac, tag, host):
         ver = self.GetVersion(host)

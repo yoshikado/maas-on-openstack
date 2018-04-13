@@ -1,8 +1,8 @@
 name: moo
-version: '1.0'
+version: '1.1'
 summary: MAAS On OpenStack
 description: |
-  An simple tool to deploy a MAAS environment for testing.
+  A simple tool to deploy a MAAS environment for testing.
 
 grade: stable
 confinement: devmode

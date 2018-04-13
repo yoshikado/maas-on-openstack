@@ -23,6 +23,7 @@ class OpenstackUtils:
         self.cfg = cfg
         self.credentials = self.cfg.credentials
         self.keystonecredentials = self.cfg.keystonecredentials
+        LOG.SetLevel(self.cfg.log_level)
 
     def Init(self):
         self.auth = v2.Password(**self.keystonecredentials)
@@ -125,11 +126,12 @@ class OpenstackUtils:
             return e
         return detail['id']
 
-    def GetInstanceID(self, instance_name):
+    def GetInstanceID(self, instance_name, disable_log=False):
         try:
             instance_id = self.nova.servers.find(name=instance_name).id
         except novaclient.exceptions.NotFound as e:
-            log.error(e)
+            if disable_log is False:
+                log.error(e)
             return False
         return instance_id
 
@@ -219,8 +221,8 @@ class OpenstackUtils:
         image_id = self.GetImageID(image)
         files = {}
         userdata = None
-        if self.GetInstanceID(name):
-            log.error('ERROR:Could not create instance. Instance already created: %s' % name)
+        if self.GetInstanceID(name, True):
+            log.error('ERROR:Could not create instance. Instance already exist: %s' % name)
             return False
         if cloud_cfg_file:
             try:
