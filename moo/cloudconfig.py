@@ -83,7 +83,7 @@ gateway %s\n" % (ips[2], ips[0], ips.netmask, ips[1])
         if release == 'trusty':
             data.update({'runcmd': ['ifup eth1'],
                          'write_files': [{'content': self.eth1cfg,
-                                           'path': '/etc/network/interfaces.d/eth1.cfg'}]})
+                                          'path': '/etc/network/interfaces.d/eth1.cfg'}]})
         yaml.safe_dump(data, f, encoding='utf8', default_flow_style=False)
         f.close()
 
@@ -103,4 +103,3 @@ gateway %s\n" % (ips[2], ips[0], ips.netmask, ips[1])
                                         'name': self.interface}]}}
         yaml.safe_dump(data, f, encoding='utf8', default_flow_style=False)
         f.close()
-

@@ -1,14 +1,17 @@
 from pathlib import Path
 from Crypto.PublicKey import RSA
 import yaml
-import click
 import re
 import urllib.request
+from moo.logging import Logging
+
+LOG = Logging(__name__)
+log = LOG.getLogger()
 
 
 def CheckDir(dir):
     if Path(dir).is_file():
-        click.echo('%s is not a directory but file.' % dir)
+        log.error('%s is not a directory but file.' % dir)
         return False
     if not Path(dir).is_dir():
         Path(dir).mkdir(parents=True, exist_ok=True)
@@ -17,7 +20,7 @@ def CheckDir(dir):
 
 def GetMOOEnvVar(moo_envpath):
     if not Path(moo_envpath).is_file():
-        click.echo('Configuration file: %s not found.' % moo_envpath)
+        log.error('Configuration file: %s not found.' % moo_envpath)
         return False
     f = open(moo_envpath, 'r')
     moo_vars = yaml.load(f)
